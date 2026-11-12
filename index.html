@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>SURVIVOR | Open World</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+body {
+    overflow: hidden;
+    background: #101820;
+    color: white;
+    touch-action: none;
+}
+canvas {
+    display: block;
+}
+#menu {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(
+        90deg,
+        rgba(0,0,0,.88),
+        rgba(0,0,0,.15),
+        rgba(0,0,0,.8)
+    );
+    text-align: center;
+}
+.logo {
+    font-size: clamp(45px, 10vw, 85px);
+    font-weight: 900;
+    letter-spacing: 12px;
+    color: #d8d2bd;
+    text-shadow: 0 5px 25px black;
+}
+.subtitle {
+    letter-spacing: 7px;
+    color: #aaa;
+    margin: 12px 0 50px;
+}
+.menu-btn {
+    width: 260px;
+    padding: 17px;
+    margin: 7px;
+    border: 1px solid #a9a18a;
+    background: rgba(30,35,31,.85);
+    color: white;
+    font-size: 17px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: .2s;
+}
+.menu-btn:hover {
+    background: #a18b58;
+    transform: scale(1.04);
+}
+#hud {
+    display: none;
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 3;
+}
+.top {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    width: 210px;
+    background: rgba(0,0,0,.65);
+    padding: 13px;
+    border-radius: 9px;
+}
+.bar {
+    height: 9px;
+    background: #333;
+    margin: 7px 0 12px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.fill {
+    height: 100%;
+    width: 100%;
+    transition: width .2s;
+}
+#health {background:#c44739}
+#hunger {background:#d9a33c}
+#thirst {background:#399ed1}
+.day {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    background: rgba(0,0,0,.65);
+    padding: 12px 18px;
+    border-radius: 8px;
+}
+#message {
+    position: absolute;
+    top: 20%;
+    width: 100%;
+    text-align: center;
+    color: white;
+    text-shadow: 0 2px 5px black;
+    font-size: 17px;
+}
+#joystick {
+    position: absolute;
+    bottom: 35px;
+    left: 30px;
+    width: 125px;
+    height: 125px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.13);
+    border: 2px solid rgba(255,255,255,.3);
+    pointer-events: auto;
+    touch-action: none;
+}
+#stick {
+    position: absolute;
+    left: 35px;
+    top: 35px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.65);
+}
+#actions {
+    position: absolute;
+    right: 20px;
+    bottom: 35px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: auto;
+}
+.action {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    border: 1px solid #aaa;
+    background: rgba(0,0,0,.6);
+    color: white;
+    font-size: 12px;
+    touch-action: none;
+}
+#inventory {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.9);
+    z-index: 10;
+    align-items: center;
+    justify-content: center;
+}
+.inventory-box {
+    background: #202a30;
+    border: 1px solid #887b57;
+    padding: 25px;
+    width: min(90%, 380px);
+    border-radius: 12px;
+}
+.inventory-box h2 {
+    margin-bottom: 20px;
+}
+.slot {
+    background: #354149;
+    padding: 15px;
+    margin: 8px 0;
+    border-radius: 7px;
+}
+.close {
+    width: 100%;
+    padding: 13px;
+    background: #927b49;
+    color: white;
+    border: none;
+    margin-top: 15px;
+}
+#settings {
+    display:none;
+    position:fixed;
+    z-index:8;
+    inset:0;
+    background:rgba(0,0,0,.9);
+    align-items:center;
+    justify-content:center;
+}
+@media(min-width:800px) {
+    #joystick {
+        width: 140px;
+        height: 140px;
+    }
+}
+</style>
+</head>
+<body>
+<div id="menu">
+    <div class="logo">SURVIVOR</div>
+    <div class="subtitle">OPEN WORLD • SURVIVAL</div>
+    <button class="menu-btn" onclick="startGame()">▶ НАЧАТЬ ИГРУ</button>
+    <button class="menu-btn" onclick="openSettings()">⚙ НАСТРОЙКИ</button>
+    <button class="menu-btn" onclick="alert('SURVIVOR OPEN WORLD')">ОБ ИГРЕ</button>
+</div>
+<div id="settings">
+    <div class="inventory-box">
+        <h2>НАСТРОЙКИ</h2>
+        <p>Управление:</p>
+        <p style="margin-top:12px;color:#aaa">
+            Телефон: джойстик и кнопки.<br>
+            Компьютер: WASD и мышь.
+        </p>
+        <button class="close" onclick="closeSettings()">НАЗАД</button>
+    </div>
+</div>
+<div id="hud">
+    <div class="top">
+        ❤️ Здоровье
+        <div class="bar"><div class="fill" id="health"></div></div>
+        🍖 Голод
+        <div class="bar"><div class="fill" id="hunger"></div></div>
+        💧 Жажда
+        <div class="bar"><div class="fill" id="thirst"></div></div>
+    </div>
+    <div class="day" id="day">☀️ День 1</div>
+    <div id="message">Добро пожаловать на остров</div>
+    <div id="joystick">
+        <div id="stick"></div>
+    </div>
+    <div id="actions">
+        <button class="action" onclick="interact()">✋<br>СОБРАТЬ</button>
+        <button class="action" onclick="toggleInventory()">🎒<br>СУМКА</button>
+        <button class="action" onclick="jump()">⬆️<br>ПРЫЖОК</button>
+    </div>
+</div>
+<div id="inventory">
+    <div class="inventory-box">
+        <h2>🎒 ИНВЕНТАРЬ</h2>
+        <div class="slot">🪵 Дерево: <span id="wood">0</span></div>
+        <div class="slot">🪨 Камень: <span id="stone">0</span></div>
+        <div class="slot">🍎 Ягоды: <span id="berries">0</span></div>
+        <div class="slot">💧 Вода: <span id="water">0</span></div>
+        <button class="close" onclick="toggleInventory()">ЗАКРЫТЬ</button>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x91b6c4);
+scene.fog = new THREE.Fog(0x91b6c4, 35, 130);
+const camera = new THREE.PerspectiveCamera(
+    70, innerWidth / innerHeight, 0.1, 500
+);
+const renderer = new THREE.WebGLRenderer({
+    antialias:true
+});
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.7));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputEncoding = THREE.sRGBEncoding;
+document.body.appendChild(renderer.domElement);
+const ambient = new THREE.HemisphereLight(0xc8e1ff, 0x4a4935, 1.5);
+scene.add(ambient);
+const sun = new THREE.DirectionalLight(0xffe0a1, 2);
+sun.position.set(30,50,20);
+sun.castShadow = true;
+scene.add(sun);
+// ОСТРОВ
+const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(250,250,50,50),
+    new THREE.MeshStandardMaterial({
+        color:0x63764a,
+        roughness:1
+    })
+);
+ground.rotation.x = -Math.PI/2;
+ground.receiveShadow = true;
+scene.add(ground);
+// МОРЕ
+const ocean = new THREE.Mesh(
+    new THREE.PlaneGeometry(1000,1000),
+    new THREE.MeshStandardMaterial({
+        color:0x286b87,
+        roughness:.3
+    })
+);
+ocean.rotation.x = -Math.PI/2;
+ocean.position.y = -1.5;
+scene.add(ocean);
+// ПЕРСОНАЖ
+const player = new THREE.Group();
+const skin = new THREE.MeshStandardMaterial({color:0xc18c65});
+const clothes = new THREE.MeshStandardMaterial({color:0x4b5949});
+const dark = new THREE.MeshStandardMaterial({color:0x252c2b});
+function box(w,h,d,mat,x,y,z,parent) {
+    const mesh = new THREE.Mesh(
+        new THREE.BoxGeometry(w,h,d), mat
+    );
+    mesh.position.set(x,y,z);
+    mesh.castShadow = true;
+    parent.add(mesh);
+    return mesh;
+}
+const body = box(.65,.9,.35,clothes,0,1.25,0,player);
+const head = new THREE.Mesh(
+    new THREE.SphereGeometry(.23,16,16),skin
+);
+head.position.y = 1.92;
+head.castShadow = true;
+player.add(head);
+const leftLeg = box(.23,.65,.25,dark,-.18,.48,0,player);
+const rightLeg = box(.23,.65,.25,dark,.18,.48,0,player);
+const leftArm = box(.2,.7,.22,clothes,-.47,1.25,0,player);
+const rightArm = box(.2,.7,.22,clothes,.47,1.25,0,player);
+player.position.set(0,0,0);
+scene.add(player);
+// ДЕРЕВЬЯ И РЕСУРСЫ
+const objects = [];
+function tree(x,z) {
+    const group = new THREE.Group();
+    const trunk = new THREE.Mesh(
+        new THREE.CylinderGeometry(.25,.35,2,8),
+        new THREE.MeshStandardMaterial({color:0x59402a})
+    );
+    trunk.position.y=1;
+    trunk.castShadow=true;
+    group.add(trunk);
+    const leaves = new THREE.Mesh(
+        new THREE.ConeGeometry(1.3,3.5,8),
+        new THREE.MeshStandardMaterial({color:0x345b36})
+    );
+    leaves.position.y=3.1;
+    leaves.castShadow=true;
+    group.add(leaves);
+    group.position.set(x,0,z);
+    scene.add(group);
+    objects.push({mesh:group,type:"wood",name:"Дерево"});
+}
+function rock(x,z) {
+    const mesh = new THREE.Mesh(
+        new THREE.DodecahedronGeometry(.7,1),
+        new THREE.MeshStandardMaterial({color:0x777b78})
+    );
+    mesh.position.set(x,.4,z);
+    mesh.castShadow=true;
+    scene.add(mesh);
+    objects.push({mesh,type:"stone",name:"Камень"});
+}
+function bush(x,z) {
+    const mesh = new THREE.Mesh(
+        new THREE.SphereGeometry(.65,10,10),
+        new THREE.MeshStandardMaterial({color:0x436a35})
+    );
+    mesh.position.set(x,.55,z);
+    scene.add(mesh);
+    objects.push({mesh,type:"berries",name:"Ягоды"});
+}
+for(let i=0;i<100;i++){
+    let x=(Math.random()-.5)*180;
+    let z=(Math.random()-.5)*180;
+    if(Math.hypot(x,z)<12) continue;
+    let type=Math.random();
+    if(type<.65) tree(x,z);
+    else if(type<.85) rock(x,z);
+    else bush(x,z);
+}
+// ДОМА
+function house(x,z){
+    const group=new THREE.Group();
+    box(5,3,5,
+        new THREE.MeshStandardMaterial({color:0x77716a}),
+        0,1.5,0,group);
+    const roof=new THREE.Mesh(
+        new THREE.ConeGeometry(4,2,4),
+        new THREE.MeshStandardMaterial({color:0x413d36})
+    );
+    roof.position.y=4;
+    roof.rotation.y=Math.PI/4;
+    group.add(roof);
+    group.position.set(x,0,z);
+    scene.add(group);
+}
+house(15,-20);
+house(-25,30);
+house(35,45);
+// УПРАВЛЕНИЕ
+let keys={};
+let moveX=0;
+let moveY=0;
+let isPlaying=false;
+let health=100;
+let hunger=100;
+let thirst=100;
+let wood=0,stone=0,berries=0,water=0;
+let dayCount=1;
+let night=0;
+document.addEventListener("keydown",e=>{
+    keys[e.key.toLowerCase()]=true;
+    if(e.key.toLowerCase()==="e") interact();
+    if(e.code==="Space") jump();
+});
+document.addEventListener("keyup",e=>{
+    keys[e.key.toLowerCase()]=false;
+});
+// ДЖОЙСТИК
+const joystick=document.getElementById("joystick");
+const stick=document.getElementById("stick");
+let joyActive=false;
+let joyId=null;
+joystick.addEventListener("pointerdown",e=>{
+    joyActive=true;
+    joyId=e.pointerId;
+    joystick.setPointerCapture(e.pointerId);
+    updateJoy(e);
+});
+joystick.addEventListener("pointermove",e=>{
+    if(joyActive && e.pointerId===joyId) updateJoy(e);
+});
+function updateJoy(e){
+    const rect=joystick.getBoundingClientRect();
+    let x=e.clientX-(rect.left+rect.width/2);
+    let y=e.clientY-(rect.top+rect.height/2);
+    const distance=Math.hypot(x,y);
+    const max=40;
+    if(distance>max){
+        x=x/distance*max;
+        y=y/distance*max;
+    }
+    stick.style.transform=`translate(${x}px,${y}px)`;
+    moveX=x/max;
+    moveY=y/max;
+}
+function releaseJoy(){
+    joyActive=false;
+    moveX=0;
+    moveY=0;
+    stick.style.transform="translate(0px,0px)";
+}
+joystick.addEventListener("pointerup",releaseJoy);
+joystick.addEventListener("pointercancel",releaseJoy);
+let velocityY=0;
+let jumping=false;
+function jump(){
+    if(!isPlaying || jumping) return;
+    jumping=true;
+    velocityY=.18;
+}
+// СБОР РЕСУРСОВ
+function interact(){
+    if(!isPlaying) return;
+    let closest=null;
+    let minDistance=4;
+    objects.forEach(obj=>{
+        let d=player.position.distanceTo(obj.mesh.position);
+        if(d<minDistance){
+            minDistance=d;
+            closest=obj;
+        }
+    });
+    if(!closest){
+        showMessage("Рядом нет ресурсов");
+        return;
+    }
+    if(closest.type==="wood") wood+=3;
+    if(closest.type==="stone") stone+=2;
+    if(closest.type==="berries") berries+=2;
+    scene.remove(closest.mesh);
+    objects.splice(objects.indexOf(closest),1);
+    updateInventory();
+    showMessage("Ресурс собран!");
+}
+function updateInventory(){
+    document.getElementById("wood").innerText=wood;
+    document.getElementById("stone").innerText=stone;
+    document.getElementById("berries").innerText=berries;
+    document.getElementById("water").innerText=water;
+}
+function toggleInventory(){
+    const inv=document.getElementById("inventory");
+    inv.style.display=
+        inv.style.display==="flex"?"none":"flex";
+}
+function showMessage(text){
+    const el=document.getElementById("message");
+    el.innerText=text;
+    setTimeout(()=>{
+        el.innerText="";
+    },2000);
+}
+// ГЛАВНОЕ МЕНЮ
+function startGame(){
+    isPlaying=true;
+    document.getElementById("menu").style.display="none";
+    document.getElementById("hud").style.display="block";
+    showMessage("Ты оказался на неизвестном острове. Выживай!");
+}
+function openSettings(){
+    document.getElementById("settings").style.display="flex";
+}
+function closeSettings(){
+    document.getElementById("settings").style.display="none";
+}
+// КАМЕРА И ИГРОВОЙ ЦИКЛ
+let cameraAngle=0;
+let lastTime=0;
+let moveTimer=0;
+function animate(time=0){
+    requestAnimationFrame(animate);
+    const delta=Math.min((time-lastTime)/16.67,2);
+    lastTime=time;
+    if(isPlaying){
+        let x=moveX;
+        let z=moveY;
+        if(keys["w"]||keys["arrowup"]) z-=1;
+        if(keys["s"]||keys["arrowdown"]) z+=1;
+        if(keys["a"]||keys["arrowleft"]) x-=1;
+        if(keys["d"]||keys["arrowright"]) x+=1;
+        const length=Math.hypot(x,z);
+        if(length>1){
+            x/=length;
+            z/=length;
+        }
+        if(length>.05){
+            const speed=0.13*delta;
+            const dx=x*Math.cos(cameraAngle)-z*Math.sin(cameraAngle);
+            const dz=x*Math.sin(cameraAngle)+z*Math.cos(cameraAngle);
+            player.position.x+=dx*speed;
+            player.position.z+=dz*speed;
+            player.rotation.y=Math.atan2(dx,dz);
+            moveTimer+=delta;
+            leftLeg.rotation.x=Math.sin(moveTimer*.5)*.5;
+            rightLeg.rotation.x=-Math.sin(moveTimer*.5)*.5;
+            leftArm.rotation.x=-Math.sin(moveTimer*.5)*.3;
+            rightArm.rotation.x=Math.sin(moveTimer*.5)*.3;
+        }else{
+            leftLeg.rotation.x=0;
+            rightLeg.rotation.x=0;
+            leftArm.rotation.x=0;
+            rightArm.rotation.x=0;
+        }
+        player.position.x=THREE.MathUtils.clamp(player.position.x,-115,115);
+        player.position.z=THREE.MathUtils.clamp(player.position.z,-115,115);
+        if(jumping){
+            player.position.y+=velocityY*delta;
+            velocityY-=.012*delta;
+            if(player.position.y<=0){
+                player.position.y=0;
+                jumping=false;
+                velocityY=0;
+            }
+        }
+        // КАМЕРА ОТ ТРЕТЬЕГО ЛИЦА
+        const distance=7;
+        const targetX=player.position.x-Math.sin(cameraAngle)*distance;
+        const targetZ=player.position.z-Math.cos(cameraAngle)*distance;
+        camera.position.lerp(
+            new THREE.Vector3(targetX,4.2,targetZ),.12
+        );
+        camera.lookAt(
+            player.position.x,
+            player.position.y+1.2,
+            player.position.z
+        );
+        // ПОТРЕБНОСТИ
+        if(time%1000<20){
+            hunger=Math.max(0,hunger-.015);
+            thirst=Math.max(0,thirst-.025);
+            if(hunger<=0 || thirst<=0){
+                health=Math.max(0,health-.025);
+            }
+            document.getElementById("health").style.width=health+"%";
+            document.getElementById("hunger").style.width=hunger+"%";
+            document.getElementById("thirst").style.width=thirst+"%";
+        }
+        // ДЕНЬ И НОЧЬ
+        night+=.0001*delta;
+        let light=.8+Math.sin(night)*.3;
+        sun.intensity=Math.max(.15,light*2);
+        if(night>Math.PI*2){
+            night=0;
+            dayCount++;
+            document.getElementById("day").innerText="☀️ День "+dayCount;
+        }
+        if(health<=0){
+            isPlaying=false;
+            showMessage("Ты проиграл! Перезагрузи игру.");
+        }
+    }
+    renderer.render(scene,camera);
+}
+animate();
+// ПОВОРОТ КАМЕРЫ МЫШЬЮ И ПАЛЬЦЕМ
+let lastPointerX=null;
+renderer.domElement.addEventListener("pointerdown",e=>{
+    if(e.pointerType==="mouse") lastPointerX=e.clientX;
+});
+renderer.domElement.addEventListener("pointermove",e=>{
+    if(!isPlaying || e.pointerType!=="mouse") return;
+    if(e.buttons===1 && lastPointerX!==null){
+        cameraAngle+=(e.clientX-lastPointerX)*.005;
+        lastPointerX=e.clientX;
+    }
+});
+renderer.domElement.addEventListener("pointerup",()=>{
+    lastPointerX=null;
+});
+renderer.domElement.addEventListener("touchstart",e=>{
+    if(e.target===renderer.domElement){
+        lastPointerX=e.touches[0].clientX;
+    }
+},{passive:true});
+renderer.domElement.addEventListener("touchmove",e=>{
+    if(!isPlaying || lastPointerX===null) return;
+    if(e.target===renderer.domElement){
+        const x=e.touches[0].clientX;
+        cameraAngle+=(x-lastPointerX)*.008;
+        lastPointerX=x;
+    }
+},{passive:true});
+renderer.domElement.addEventListener("touchend",()=>{
+    lastPointerX=null;
+});
+// РАЗМЕР ЭКРАНА
+window.addEventListener("resize",()=>{
+    camera.aspect=innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth,innerHeight);
+});
+</script>
+</body>
+</html>
+```
