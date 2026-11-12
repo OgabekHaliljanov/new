@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Выживший — Последний день</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: Arial, sans-serif;
+    background: #10151b;
+    color: white;
+    min-height: 100vh;
+}
+header {
+    padding: 22px;
+    text-align: center;
+    background: #171f28;
+    border-bottom: 1px solid #303b47;
+}
+header h1 {
+    color: #e9a23b;
+    font-size: 28px;
+    letter-spacing: 2px;
+}
+header p {
+    color: #8996a5;
+    margin-top: 7px;
+}
+.container {
+    max-width: 1100px;
+    margin: auto;
+    padding: 20px;
+}
+.status {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+.stat {
+    background: #1c2631;
+    padding: 16px;
+    border-radius: 12px;
+    border: 1px solid #34414e;
+}
+.stat span {
+    display: block;
+    color: #aab5c0;
+    font-size: 13px;
+    margin-bottom: 10px;
+}
+.stat strong {
+    font-size: 22px;
+}
+.progress {
+    height: 7px;
+    background: #3a4652;
+    border-radius: 10px;
+    margin-top: 9px;
+    overflow: hidden;
+}
+.progress div {
+    height: 100%;
+    transition: width .3s;
+    background: #48c78e;
+}
+.game {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: 18px;
+}
+.location {
+    background: linear-gradient(145deg, #263746, #151d26);
+    min-height: 310px;
+    border-radius: 15px;
+    padding: 25px;
+    border: 1px solid #34414e;
+}
+.location h2 {
+    font-size: 25px;
+    margin-bottom: 15px;
+    color: #e9a23b;
+}
+.scene {
+    font-size: 75px;
+    text-align: center;
+    padding: 25px;
+}
+.description {
+    color: #bdc7d1;
+    line-height: 1.6;
+    text-align: center;
+}
+.panel {
+    background: #1c2631;
+    border: 1px solid #34414e;
+    border-radius: 15px;
+    padding: 20px;
+}
+.panel h3 {
+    margin-bottom: 15px;
+    color: #e9a23b;
+}
+button {
+    width: 100%;
+    padding: 13px;
+    margin-bottom: 10px;
+    background: #34495e;
+    color: white;
+    border: none;
+    border-radius: 9px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: .2s;
+}
+button:hover {
+    background: #e9a23b;
+    color: #151515;
+    transform: translateY(-2px);
+}
+.inventory {
+    margin-top: 18px;
+    background: #1c2631;
+    padding: 20px;
+    border-radius: 15px;
+    border: 1px solid #34414e;
+}
+.inventory h3 {
+    color: #e9a23b;
+    margin-bottom: 15px;
+}
+.items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.item {
+    background: #303e4b;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-size: 14px;
+}
+.log {
+    margin-top: 18px;
+    padding: 20px;
+    background: #1c2631;
+    border-radius: 15px;
+    border: 1px solid #34414e;
+}
+.log h3 {
+    color: #e9a23b;
+    margin-bottom: 12px;
+}
+.log p {
+    color: #bdc7d1;
+    line-height: 1.7;
+    font-size: 14px;
+}
+.footer {
+    text-align: center;
+    color: #657383;
+    padding: 25px;
+}
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 10;
+}
+.modal {
+    background: #1c2631;
+    border: 1px solid #e9a23b;
+    border-radius: 15px;
+    padding: 30px;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+}
+.modal h2 {
+    color: #e9a23b;
+    margin-bottom: 15px;
+}
+.modal p {
+    color: #bdc7d1;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+@media(max-width:700px) {
+    .status {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .game {
+        grid-template-columns: 1fr;
+    }
+    header h1 {
+        font-size: 22px;
+    }
+}
+</style>
+</head>
+<body>
+<header>
+    <h1>☠ ВЫЖИВШИЙ</h1>
+    <p>ПОСЛЕДНИЙ ДЕНЬ — 7 DAYS TO SURVIVE</p>
+</header>
+<div class="container">
+    <div class="status">
+        <div class="stat">
+            <span>❤️ Здоровье</span>
+            <strong id="healthText">100%</strong>
+            <div class="progress"><div id="healthBar"></div></div>
+        </div>
+        <div class="stat">
+            <span>🍔 Голод</span>
+            <strong id="foodText">100%</strong>
+            <div class="progress"><div id="foodBar"></div></div>
+        </div>
+        <div class="stat">
+            <span>💧 Жажда</span>
+            <strong id="waterText">100%</strong>
+            <div class="progress"><div id="waterBar"></div></div>
+        </div>
+        <div class="stat">
+            <span>📅 День</span>
+            <strong id="dayText">1 / 7</strong>
+            <div class="progress"><div id="dayBar"></div></div>
+        </div>
+    </div>
+    <div class="game">
+        <div class="location">
+            <h2 id="locationName">🏚 Заброшенный дом</h2>
+            <div class="scene" id="scene">🏚️</div>
+            <p class="description" id="description">
+                Ты проснулся в заброшенном доме.
+                Тебе нужно найти еду, воду и безопасное место.
+                Твоя главная задача — продержаться 7 дней.
+            </p>
+        </div>
+        <div class="panel">
+            <h3>🎮 Действия</h3>
+            <button onclick="explore()">🔍 Исследовать местность</button>
+            <button onclick="searchFood()">🍎 Искать еду</button>
+            <button onclick="searchWater()">💧 Искать воду</button>
+            <button onclick="rest()">😴 Отдохнуть</button>
+            <button onclick="changeLocation()">🗺 Сменить локацию</button>
+            <button onclick="sleep()">🌙 Переждать ночь</button>
+            <button onclick="restart()">🔄 Новая игра</button>
+        </div>
+    </div>
+    <div class="inventory">
+        <h3>🎒 Инвентарь</h3>
+        <div class="items" id="inventory">
+            <div class="item">🎒 Рюкзак</div>
+        </div>
+    </div>
+    <div class="log">
+        <h3>📜 История событий</h3>
+        <div id="logs">
+            <p>День 1: Ты начал своё путешествие. Удачи!</p>
+        </div>
+    </div>
+</div>
+<div class="footer">
+    SURVIVOR GAME © 2026
+</div>
+<div class="overlay" id="overlay">
+    <div class="modal">
+        <h2 id="modalTitle">Игра окончена</h2>
+        <p id="modalText"></p>
+        <button onclick="restart()">Играть заново</button>
+    </div>
+</div>
+<script>
+let health = 100;
+let food = 100;
+let water = 100;
+let day = 1;
+let inventory = {
+    food: 0,
+    water: 0,
+    wood: 0,
+    medicine: 0
+};
+let locationIndex = 0;
+let gameOver = false;
+const locations = [
+    {
+        name: "🏚 Заброшенный дом",
+        emoji: "🏚️",
+        text: "В этом доме можно найти полезные вещи. Но будь осторожен."
+    },
+    {
+        name: "🌲 Тёмный лес",
+        emoji: "🌲",
+        text: "Густой лес. Здесь можно найти ягоды, воду и древесину."
+    },
+    {
+        name: "🏙 Заброшенный город",
+        emoji: "🏙️",
+        text: "Много пустых зданий. Возможно, внутри остались припасы."
+    },
+    {
+        name: "🏥 Старая больница",
+        emoji: "🏥",
+        text: "Возможно, здесь остались медицинские припасы."
+    },
+    {
+        name: "🏪 Старый магазин",
+        emoji: "🏪",
+        text: "Здесь могут находиться продукты и вода."
+    }
+];
+function update() {
+    document.getElementById("healthText").innerText = health + "%";
+    document.getElementById("foodText").innerText = food + "%";
+    document.getElementById("waterText").innerText = water + "%";
+    document.getElementById("dayText").innerText = day + " / 7";
+    document.getElementById("healthBar").style.width = health + "%";
+    document.getElementById("foodBar").style.width = food + "%";
+    document.getElementById("waterBar").style.width = water + "%";
+    document.getElementById("dayBar").style.width = (day / 7 * 100) + "%";
+    document.getElementById("healthBar").style.background =
+        health < 30 ? "#e74c3c" : "#48c78e";
+    document.getElementById("foodBar").style.background =
+        food < 30 ? "#e74c3c" : "#e9a23b";
+    document.getElementById("waterBar").style.background =
+        water < 30 ? "#e74c3c" : "#3498db";
+    document.getElementById("inventory").innerHTML = `
+        <div class="item">🍎 Еда: ${inventory.food}</div>
+        <div class="item">💧 Вода: ${inventory.water}</div>
+        <div class="item">🪵 Дерево: ${inventory.wood}</div>
+        <div class="item">💊 Аптечки: ${inventory.medicine}</div>
+    `;
+    if (health <= 0) {
+        endGame(false);
+    }
+}
+function log(message) {
+    let logs = document.getElementById("logs");
+    logs.innerHTML = `<p>📌 ${message}</p>` + logs.innerHTML;
+}
+function checkGame() {
+    if (food <= 0 || water <= 0) {
+        health -= 10;
+        log("Тебе не хватает еды или воды. Здоровье ухудшается!");
+    }
+    if (health <= 0) {
+        health = 0;
+        update();
+        endGame(false);
+        return;
+    }
+    update();
+}
+function random(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+function explore() {
+    if (gameOver) return;
+    let event = random(1, 5);
+    if (event === 1) {
+        inventory.food += 2;
+        log("Ты нашёл 2 единицы еды! 🍎");
+    }
+    else if (event === 2) {
+        inventory.water += 2;
+        log("Ты нашёл чистую воду! 💧");
+    }
+    else if (event === 3) {
+        inventory.wood += 3;
+        log("Ты нашёл древесину! 🪵");
+    }
+    else if (event === 4) {
+        inventory.medicine += 1;
+        log("Ты нашёл аптечку! 💊");
+    }
+    else {
+        health -= 15;
+        log("Ты заблудился и сильно устал. -15 здоровья.");
+    }
+    food -= 5;
+    water -= 7;
+    checkGame();
+}
+function searchFood() {
+    if (gameOver) return;
+    let amount = random(1, 3);
+    inventory.food += amount;
+    food -= 5;
+    water -= 5;
+    log("Ты нашёл " + amount + " единиц еды! 🍎");
+    checkGame();
+}
+function searchWater() {
+    if (gameOver) return;
+    let amount = random(1, 3);
+    inventory.water += amount;
+    food -= 5;
+    water -= 5;
+    log("Ты нашёл " + amount + " единиц воды! 💧");
+    checkGame();
+}
+function rest() {
+    if (gameOver) return;
+    health = Math.min(100, health + 15);
+    food -= 10;
+    water -= 10;
+    log("Ты отдохнул и восстановил 15 здоровья.");
+    checkGame();
+}
+function changeLocation() {
+    if (gameOver) return;
+    locationIndex = (locationIndex + 1) % locations.length;
+    let place = locations[locationIndex];
+    document.getElementById("locationName").innerText = place.name;
+    document.getElementById("scene").innerText = place.emoji;
+    document.getElementById("description").innerText = place.text;
+    food -= 5;
+    water -= 5;
+    log("Ты отправился в новую локацию: " + place.name);
+    checkGame();
+}
+function sleep() {
+    if (gameOver) return;
+    if (day >= 7) {
+        endGame(true);
+        return;
+    }
+    day++;
+    food -= 10;
+    water -= 15;
+    health = Math.min(100, health + 5);
+    log("🌙 Наступил новый день! День " + day + " из 7.");
+    checkGame();
+}
+function endGame(win) {
+    if (gameOver) return;
+    gameOver = true;
+    document.getElementById("overlay").style.display = "flex";
+    if (win) {
+        document.getElementById("modalTitle").innerText =
+            "🏆 ТЫ ВЫЖИЛ!";
+        document.getElementById("modalText").innerText =
+            "Поздравляем! Ты продержался 7 дней в заброшенном городе. Ты настоящий выживший!";
+    } else {
+        document.getElementById("modalTitle").innerText =
+            "💀 ИГРА ОКОНЧЕНА";
+        document.getElementById("modalText").innerText =
+            "К сожалению, тебе не удалось выжить. Попробуй ещё раз и измени свою стратегию.";
+    }
+}
+function restart() {
+    health = 100;
+    food = 100;
+    water = 100;
+    day = 1;
+    inventory = {
+        food: 0,
+        water: 0,
+        wood: 0,
+        medicine: 0
+    };
+    locationIndex = 0;
+    gameOver = false;
+    document.getElementById("overlay").style.display = "none";
+    document.getElementById("locationName").innerText =
+        locations[0].name;
+    document.getElementById("scene").innerText =
+        locations[0].emoji;
+    document.getElementById("description").innerText =
+        locations[0].text;
+    document.getElementById("logs").innerHTML =
+        "<p>День 1: Ты начал своё путешествие. Удачи!</p>";
+    update();
+}
+update();
+</script>
+</body>
+</html>
