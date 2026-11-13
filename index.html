@@ -2,574 +2,420 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1,user-scalable=no">
-<title>SURVIVOR BATTLE ROYALE</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>MiniCraft 3D</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;font-family:Arial}
-body{overflow:hidden;background:#17231d;color:white;touch-action:none}
-canvas{display:block}
-#menu{
-position:fixed;inset:0;z-index:10;
-display:flex;align-items:center;justify-content:center;
-flex-direction:column;text-align:center;
-background:linear-gradient(120deg,#101b20dd,#182b22aa,#080e12ee);
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
-.logo{
-font-size:clamp(42px,10vw,85px);
-font-weight:1000;letter-spacing:9px;
-color:#e6d7b5;
-text-shadow:0 5px 30px black;
+body {
+    overflow: hidden;
+    font-family: Arial;
+    background: #87ceeb;
+    touch-action: none;
 }
-.subtitle{color:#b9b7a5;letter-spacing:5px;margin:12px 0 45px}
-.menu button{
-width:260px;padding:17px;margin:7px;
-background:#b38b42;color:white;
-border:1px solid #e4c98a;
-font-weight:bold;font-size:16px;
+canvas {
+    display: block;
 }
-.menu button:active{background:#765a2b}
-#hud{display:none;position:fixed;inset:0;pointer-events:none}
-.stats{
-position:absolute;top:15px;left:12px;
-width:185px;background:#0009;padding:12px;
-border-radius:9px;font-size:12px;
+#crosshair {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    color: white;
+    font-size: 28px;
+    pointer-events: none;
+    text-shadow: 1px 1px 3px black;
 }
-.bar{height:8px;background:#333;margin:5px 0 10px;border-radius:10px;overflow:hidden}
-.fill{height:100%;width:100%}
-#health{background:#e34b42}
-#armor{background:#4699dc}
-#hunger{background:#d9a441}
-#thirst{background:#46b6db}
-.info{
-position:absolute;right:12px;top:15px;
-background:#0009;padding:12px;border-radius:8px;
-font-size:13px;
+#top {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    color: white;
+    background: #0008;
+    padding: 10px 15px;
+    border-radius: 8px;
+    font-weight: bold;
 }
-#crosshair{
-position:absolute;left:50%;top:50%;
-transform:translate(-50%,-50%);
-font-size:27px;color:white;
-text-shadow:0 0 5px black;
+#joystick {
+    position: fixed;
+    bottom: 35px;
+    left: 25px;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: #ffffff55;
+    border: 3px solid #ffffff99;
 }
-#weaponInfo{
-position:absolute;bottom:25px;right:110px;
-background:#000a;padding:12px;border-radius:8px;
-font-size:14px;
+#stick {
+    width: 48px;
+    height: 48px;
+    background: #ffffffcc;
+    border-radius: 50%;
+    position: absolute;
+    top: 33px;
+    left: 33px;
 }
-#message{
-position:absolute;top:22%;width:100%;
-text-align:center;font-weight:bold;
-text-shadow:0 2px 5px black;
+#buttons {
+    position: fixed;
+    right: 15px;
+    bottom: 35px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 }
-#joystick{
-position:absolute;bottom:30px;left:25px;
-width:125px;height:125px;
-border-radius:50%;background:#ffffff22;
-border:2px solid #ffffff55;
-pointer-events:auto;touch-action:none;
+button {
+    width: 70px;
+    height: 60px;
+    border: 2px solid white;
+    background: #333a;
+    color: white;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: bold;
 }
-#stick{
-position:absolute;left:35px;top:35px;
-width:50px;height:50px;border-radius:50%;
-background:#ffffff99;
+#jump {
+    position: fixed;
+    right: 100px;
+    bottom: 48px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    font-size: 22px;
 }
-.controls{
-position:absolute;bottom:25px;right:15px;
-display:grid;grid-template-columns:65px 65px;
-gap:10px;pointer-events:auto;
+#inventory {
+    position: fixed;
+    bottom: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 4px;
 }
-.control{
-width:65px;height:65px;
-border-radius:50%;background:#101b20bb;
-border:1px solid #ffffff77;
-color:white;font-size:12px;
+.slot {
+    width: 42px;
+    height: 42px;
+    border: 2px solid white;
+    background: #333b;
+    display: grid;
+    place-items: center;
+    color: white;
+    font-size: 22px;
+    border-radius: 5px;
 }
-.control:active{background:#b38b42}
-#inventory{
-display:none;position:fixed;inset:0;z-index:20;
-background:#000d;align-items:center;justify-content:center;
+.slot.active {
+    border: 3px solid yellow;
+    transform: translateY(-5px);
 }
-.box{
-background:#1c2927;padding:25px;
-width:90%;max-width:380px;
-border:1px solid #b38b42;border-radius:12px;
-}
-.slot{background:#34443e;padding:13px;margin:8px 0;border-radius:7px}
-.close{
-width:100%;padding:13px;margin-top:12px;
-background:#b38b42;color:white;border:0;
-}
-#end{
-display:none;position:fixed;inset:0;z-index:30;
-background:#000d;align-items:center;justify-content:center;
-text-align:center;
-}
-#end .box{padding:35px}
-@media(max-width:500px){
-.stats{width:155px;font-size:11px}
-.info{font-size:11px}
-#weaponInfo{right:95px;font-size:11px}
+#hint {
+    position: fixed;
+    top: 65px;
+    left: 12px;
+    color: white;
+    background: #0007;
+    padding: 7px;
+    border-radius: 5px;
+    font-size: 11px;
 }
 </style>
 </head>
 <body>
-<div id="menu" class="menu">
-    <div class="logo">SURVIVOR</div>
-    <div class="subtitle">BATTLE ROYALE</div>
-    <button onclick="startGame()">▶ PLAY</button>
-    <button onclick="settings()">⚙ SETTINGS</button>
-    <button onclick="alert('SURVIVOR BATTLE ROYALE')">ABOUT GAME</button>
+<div id="top">🌍 MINICRAFT 3D</div>
+<div id="hint">Проводи пальцем по экрану для обзора</div>
+<div id="crosshair">+</div>
+<div id="joystick">
+    <div id="stick"></div>
 </div>
-<div id="hud">
-    <div class="stats">
-        ❤️ Здоровье
-        <div class="bar"><div class="fill" id="health"></div></div>
-        🛡 Броня
-        <div class="bar"><div class="fill" id="armor"></div></div>
-        🍖 Голод
-        <div class="bar"><div class="fill" id="hunger"></div></div>
-        💧 Жажда
-        <div class="bar"><div class="fill" id="thirst"></div></div>
-    </div>
-    <div class="info">
-        🏆 Очки: <span id="score">0</span><br><br>
-        🌍 Остров: 01<br><br>
-        ☀️ <span id="clock">День</span>
-    </div>
-    <div id="crosshair">⊕</div>
-    <div id="message">Добро пожаловать на остров!</div>
-    <div id="weaponInfo">
-        ⚡ БЛАСТЕР<br>
-        🔋 <span id="ammo">30</span> / 30
-    </div>
-    <div id="joystick">
-        <div id="stick"></div>
-    </div>
-    <div class="controls">
-        <button class="control" onclick="shoot()">⚡<br>ОГОНЬ</button>
-        <button class="control" onclick="jump()">⬆️<br>ПРЫЖОК</button>
-        <button class="control" onclick="reload()">🔋<br>ЗАРЯД</button>
-        <button class="control" onclick="openInventory()">🎒<br>СУМКА</button>
-    </div>
+<button id="jump">⬆</button>
+<div id="buttons">
+    <button id="break">⛏️<br>ЛОМАТЬ</button>
+    <button id="place">🧱<br>СТАВИТЬ</button>
 </div>
 <div id="inventory">
-    <div class="box">
-        <h2>🎒 ИНВЕНТАРЬ</h2>
-        <div class="slot">🪵 Дерево: <span id="wood">0</span></div>
-        <div class="slot">🪨 Камень: <span id="stone">0</span></div>
-        <div class="slot">🍎 Ягоды: <span id="berries">0</span></div>
-        <div class="slot">🔋 Энергия: <span id="energy">90</span></div>
-        <button class="close" onclick="openInventory()">ЗАКРЫТЬ</button>
-    </div>
+    <div class="slot active" data-block="grass">🟩</div>
+    <div class="slot" data-block="dirt">🟫</div>
+    <div class="slot" data-block="stone">⬜</div>
+    <div class="slot" data-block="wood">🪵</div>
+    <div class="slot" data-block="leaves">🌳</div>
 </div>
-<div id="end">
-    <div class="box">
-        <h1>🏆 МИССИЯ ЗАВЕРШЕНА</h1>
-        <p style="margin:20px">Ты справился с испытанием!</p>
-        <button class="close" onclick="location.reload()">ИГРАТЬ СНОВА</button>
-    </div>
-</div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script>
+<script type="module">
+import * as THREE from
+'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
 // SCENE
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x9cb7c0);
-scene.fog=new THREE.Fog(0x9cb7c0,40,180);
-const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.1,500);
-const renderer=new THREE.WebGLRenderer({antialias:true});
-renderer.setSize(innerWidth,innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
-renderer.shadowMap.enabled=true;
-document.body.appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xddeeff,0x48513c,1.6));
-const sun=new THREE.DirectionalLight(0xffe2b0,2);
-sun.position.set(40,70,30);
-sun.castShadow=true;
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x87ceeb);
+scene.fog = new THREE.Fog(0x87ceeb, 15, 65);
+// CAMERA
+const camera = new THREE.PerspectiveCamera(
+    75,
+    innerWidth / innerHeight,
+    0.1,
+    100
+);
+camera.position.set(0, 2, 5);
+// RENDERER
+const renderer = new THREE.WebGLRenderer({
+    antialias: false
+});
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+document.body.prepend(renderer.domElement);
+// LIGHT
+scene.add(new THREE.HemisphereLight(0xffffff, 0x65734b, 2));
+const sun = new THREE.DirectionalLight(0xffffff, 2);
+sun.position.set(10, 20, 10);
 scene.add(sun);
+// BLOCK MATERIALS
+const materials = {
+    grass: 0x55aa33,
+    dirt: 0x80502b,
+    stone: 0x888888,
+    wood: 0x79502b,
+    leaves: 0x228833
+};
+const geometry = new THREE.BoxGeometry(1,1,1);
+const blocks = [];
+function addBlock(x,y,z,type) {
+    const mesh = new THREE.Mesh(
+        geometry,
+        new THREE.MeshLambertMaterial({
+            color: materials[type]
+        })
+    );
+    mesh.position.set(x,y,z);
+    mesh.userData.type = type;
+    scene.add(mesh);
+    blocks.push(mesh);
+    return mesh;
+}
 // WORLD
-const ground=new THREE.Mesh(
-new THREE.PlaneGeometry(250,250,30,30),
-new THREE.MeshStandardMaterial({color:0x657a4d})
-);
-ground.rotation.x=-Math.PI/2;
-ground.receiveShadow=true;
-scene.add(ground);
-const sea=new THREE.Mesh(
-new THREE.PlaneGeometry(1000,1000),
-new THREE.MeshStandardMaterial({color:0x236c91})
-);
-sea.rotation.x=-Math.PI/2;
-sea.position.y=-2;
-scene.add(sea);
-// MOUNTAINS
-for(let i=0;i<30;i++){
-const mountain=new THREE.Mesh(
-new THREE.ConeGeometry(10+Math.random()*12,15+Math.random()*25,6),
-new THREE.MeshStandardMaterial({color:0x66716a})
-);
-mountain.position.set((Math.random()-.5)*300,8,(Math.random()-.5)*300);
-scene.add(mountain);
+for(let x=-12; x<12; x++) {
+    for(let z=-12; z<12; z++) {
+        let height =
+            Math.floor(
+                Math.sin(x * 0.35) +
+                Math.cos(z * 0.3)
+            );
+        height = Math.max(0,height);
+        for(let y=-1; y<height; y++) {
+            addBlock(
+                x,
+                y,
+                z,
+                y === height-1 ? "grass" : "dirt"
+            );
+        }
+    }
 }
+// TREES
+function createTree(x,z) {
+    for(let y=0; y<3; y++) {
+        addBlock(x,y+1,z,"wood");
+    }
+    for(let dx=-1; dx<=1; dx++) {
+        for(let dz=-1; dz<=1; dz++) {
+            for(let dy=2; dy<=4; dy++) {
+                if(Math.random()>0.2) {
+                    addBlock(
+                        x+dx,
+                        dy,
+                        z+dz,
+                        "leaves"
+                    );
+                }
+            }
+        }
+    }
+}
+for(let i=0;i<15;i++) {
+    let x=Math.floor(Math.random()*20)-10;
+    let z=Math.floor(Math.random()*20)-10;
+    if(Math.abs(x)<3 && Math.abs(z)<3) continue;
+    createTree(x,z);
+}
+// WATER
+const water = new THREE.Mesh(
+    new THREE.BoxGeometry(8,0.15,8),
+    new THREE.MeshLambertMaterial({
+        color:0x2299ff,
+        transparent:true,
+        opacity:0.7
+    })
+);
+water.position.set(7,0.1,7);
+scene.add(water);
 // PLAYER
-const player=new THREE.Group();
-scene.add(player);
-function makeBox(w,h,d,color,x,y,z,parent){
-const m=new THREE.Mesh(
-new THREE.BoxGeometry(w,h,d),
-new THREE.MeshStandardMaterial({color})
+let yaw=0;
+let pitch=0;
+let velocityY=0;
+let grounded=true;
+let selected="grass";
+let movement={
+    x:0,
+    y:0
+};
+// CAMERA ROTATION
+function look(dx,dy) {
+    yaw -= dx*0.004;
+    pitch -= dy*0.004;
+    pitch=Math.max(-1.3,Math.min(1.3,pitch));
+    camera.rotation.order="YXZ";
+    camera.rotation.y=yaw;
+    camera.rotation.x=pitch;
+}
+// TOUCH LOOK
+let lookTouch=null;
+let lastX=0;
+let lastY=0;
+renderer.domElement.addEventListener(
+    "pointerdown",e=>{
+        if(e.clientX<innerWidth*0.35) return;
+        lookTouch=e.pointerId;
+        lastX=e.clientX;
+        lastY=e.clientY;
+    }
 );
-m.position.set(x,y,z);
-m.castShadow=true;
-parent.add(m);
-return m;
-}
-const body=makeBox(.65,.9,.35,0x52644a,0,1.25,0,player);
-const head=new THREE.Mesh(
-new THREE.SphereGeometry(.23,16,16),
-new THREE.MeshStandardMaterial({color:0xc18c65})
+renderer.domElement.addEventListener(
+    "pointermove",e=>{
+        if(e.pointerId!==lookTouch) return;
+        look(
+            e.clientX-lastX,
+            e.clientY-lastY
+        );
+        lastX=e.clientX;
+        lastY=e.clientY;
+    }
 );
-head.position.y=1.92;
-player.add(head);
-const legs=[
-makeBox(.23,.65,.25,0x26382d,-.18,.48,0,player),
-makeBox(.23,.65,.25,0x26382d,.18,.48,0,player)
-];
-const arms=[
-makeBox(.2,.7,.22,0x52644a,-.47,1.25,0,player),
-makeBox(.2,.7,.22,0x52644a,.47,1.25,0,player)
-];
-// BACKPACK
-makeBox(.48,.55,.22,0x303a31,0,1.3,-.28,player);
-// FICTIONAL ENERGY BLASTER
-const weapon=new THREE.Group();
-player.add(weapon);
-makeBox(.16,.17,.8,0x29343c,.48,1.35,.45,weapon);
-makeBox(.20,.25,.25,0x4e8d9b,.48,1.48,.35,weapon);
-makeBox(.12,.15,.28,0x54d9eb,.48,1.30,.75,weapon);
-// WORLD OBJECTS
-const resources=[];
-function addTree(x,z){
-const group=new THREE.Group();
-const trunk=new THREE.Mesh(
-new THREE.CylinderGeometry(.3,.4,2.5,8),
-new THREE.MeshStandardMaterial({color:0x65432b})
-);
-trunk.position.y=1.25;
-group.add(trunk);
-const leaves=new THREE.Mesh(
-new THREE.ConeGeometry(1.5,4,8),
-new THREE.MeshStandardMaterial({color:0x285338})
-);
-leaves.position.y=3.8;
-group.add(leaves);
-group.position.set(x,0,z);
-scene.add(group);
-resources.push({mesh:group,type:"wood"});
+function stopLook(e) {
+    if(e.pointerId===lookTouch) {
+        lookTouch=null;
+    }
 }
-function addRock(x,z){
-const rock=new THREE.Mesh(
-new THREE.DodecahedronGeometry(.8),
-new THREE.MeshStandardMaterial({color:0x858b89})
-);
-rock.position.set(x,.5,z);
-scene.add(rock);
-resources.push({mesh:rock,type:"stone"});
-}
-function addBush(x,z){
-const bush=new THREE.Mesh(
-new THREE.SphereGeometry(.7,10,10),
-new THREE.MeshStandardMaterial({color:0x537d3c})
-);
-bush.position.set(x,.5,z);
-scene.add(bush);
-resources.push({mesh:bush,type:"berries"});
-}
-for(let i=0;i<120;i++){
-let x=(Math.random()-.5)*190;
-let z=(Math.random()-.5)*190;
-if(Math.hypot(x,z)<15)continue;
-let r=Math.random();
-if(r<.65)addTree(x,z);
-else if(r<.85)addRock(x,z);
-else addBush(x,z);
-}
-// HOUSES
-function house(x,z){
-const group=new THREE.Group();
-makeBox(6,4,6,0x77746b,0,2,0,group);
-makeBox(6.5,.4,6.5,0x413b35,0,4.2,0,group);
-const door=makeBox(1.3,2.3,.12,0x35251b,0,.95,3.05,group);
-group.position.set(x,0,z);
-scene.add(group);
-}
-house(20,-25);
-house(-30,35);
-house(40,40);
-house(-45,-30);
-// TRAINING DRONES
-const drones=[];
-function createDrone(x,z){
-const group=new THREE.Group();
-const core=new THREE.Mesh(
-new THREE.SphereGeometry(.65,16,16),
-new THREE.MeshStandardMaterial({
-color:0x42d9e9,
-emissive:0x087c9c,
-emissiveIntensity:1.5
-})
-);
-group.add(core);
-const ring=new THREE.Mesh(
-new THREE.TorusGeometry(.9,.08,8,20),
-new THREE.MeshStandardMaterial({color:0x8deeff})
-);
-ring.rotation.x=Math.PI/2;
-group.add(ring);
-group.position.set(x,1.5,z);
-scene.add(group);
-drones.push({mesh:group,health:2,phase:Math.random()*6});
-}
-for(let i=0;i<12;i++){
-createDrone((Math.random()-.5)*130,(Math.random()-.5)*130);
-}
-// GAME DATA
-let playing=false;
-let health=100,armor=100,hunger=100,thirst=100;
-let ammo=30,energy=90,score=0;
-let wood=0,stone=0,berries=0;
-let moveX=0,moveY=0;
-let keys={};
-let angle=0;
-let jumping=false,velocityY=0;
-let elapsed=0;
-let lastTime=0;
-function startGame(){
-playing=true;
-document.getElementById("menu").style.display="none";
-document.getElementById("hud").style.display="block";
-message("Найди ресурсы и исследуй остров!");
-}
-function settings(){
-alert("Управление: джойстик — движение, свайп — камера, кнопки — действия.");
-}
+renderer.domElement.addEventListener("pointerup",stopLook);
+renderer.domElement.addEventListener("pointercancel",stopLook);
 // JOYSTICK
 const joystick=document.getElementById("joystick");
 const stick=document.getElementById("stick");
-let joy=false,joyId=null;
+let joyActive=false;
 joystick.addEventListener("pointerdown",e=>{
-joy=true;
-joyId=e.pointerId;
-joystick.setPointerCapture(e.pointerId);
-moveJoy(e);
+    joyActive=true;
+    joystick.setPointerCapture(e.pointerId);
+    updateJoystick(e);
 });
 joystick.addEventListener("pointermove",e=>{
-if(joy&&e.pointerId===joyId)moveJoy(e);
+    if(joyActive) updateJoystick(e);
 });
-function moveJoy(e){
-const r=joystick.getBoundingClientRect();
-let x=e.clientX-(r.left+r.width/2);
-let y=e.clientY-(r.top+r.height/2);
-let d=Math.hypot(x,y);
-if(d>40){x=x/d*40;y=y/d*40}
-moveX=x/40;
-moveY=y/40;
-stick.style.transform=`translate(${x}px,${y}px)`;
+function updateJoystick(e) {
+    const rect=joystick.getBoundingClientRect();
+    let dx=e.clientX-(rect.left+60);
+    let dy=e.clientY-(rect.top+60);
+    const length=Math.sqrt(dx*dx+dy*dy);
+    if(length>40) {
+        dx=dx/length*40;
+        dy=dy/length*40;
+    }
+    stick.style.left=(33+dx)+"px";
+    stick.style.top=(33+dy)+"px";
+    movement.x=dx/40;
+    movement.y=dy/40;
 }
-function stopJoy(){
-joy=false;moveX=0;moveY=0;
-stick.style.transform="translate(0,0)";
+function stopJoystick() {
+    joyActive=false;
+    movement.x=0;
+    movement.y=0;
+    stick.style.left="33px";
+    stick.style.top="33px";
 }
-joystick.addEventListener("pointerup",stopJoy);
-joystick.addEventListener("pointercancel",stopJoy);
-document.addEventListener("keydown",e=>{
-keys[e.key.toLowerCase()]=true;
-if(e.code==="Space")jump();
-if(e.key.toLowerCase()==="e")collect();
-if(e.key.toLowerCase()==="f")shoot();
-});
-document.addEventListener("keyup",e=>{
-keys[e.key.toLowerCase()]=false;
-});
-// CAMERA
-let cameraTouch=null;
-renderer.domElement.addEventListener("pointerdown",e=>{
-if(e.pointerType==="touch")cameraTouch=e.clientX;
-});
-renderer.domElement.addEventListener("pointermove",e=>{
-if(cameraTouch!==null && e.pointerType==="touch"){
-angle+=(e.clientX-cameraTouch)*.009;
-cameraTouch=e.clientX;
-}
-});
-renderer.domElement.addEventListener("pointerup",()=>cameraTouch=null);
-renderer.domElement.addEventListener("pointercancel",()=>cameraTouch=null);
-function jump(){
-if(!playing||jumping)return;
-jumping=true;
-velocityY=.18;
-}
-// SHOOTING AT DRONES
-const raycaster=new THREE.Raycaster();
-let shooting=false;
-function shoot(){
-if(!playing||ammo<=0)return;
-ammo--;
-document.getElementById("ammo").innerText=ammo;
-const direction=new THREE.Vector3();
-camera.getWorldDirection(direction);
-raycaster.set(camera.position,direction);
-const targets=drones.map(d=>d.mesh);
-const hits=raycaster.intersectObjects(targets,true);
-if(hits.length && hits[0].distance<65){
-let drone=drones.find(d=>
-d.mesh===hits[0].object ||
-d.mesh.children.includes(hits[0].object)
-);
-if(drone){
-drone.health--;
-if(drone.health<=0){
-scene.remove(drone.mesh);
-drones.splice(drones.indexOf(drone),1);
-score+=100;
-document.getElementById("score").innerText=score;
-message("+100 ОЧКОВ!");
-}
-else message("Попадание!");
-}
-}else{
-message("Мимо!");
-}
-}
-function reload(){
-if(!playing)return;
-ammo=30;
-document.getElementById("ammo").innerText=ammo;
-message("Энергия бластера восстановлена");
-}
-// COLLECT RESOURCES
-function collect(){
-if(!playing)return;
-let nearest=null;
-let distance=4;
-resources.forEach(r=>{
-let d=player.position.distanceTo(r.mesh.position);
-if(d<distance){distance=d;nearest=r}
-});
-if(!nearest){
-message("Рядом нет ресурсов");
-return;
-}
-if(nearest.type==="wood")wood+=3;
-if(nearest.type==="stone")stone+=2;
-if(nearest.type==="berries")berries+=2;
-scene.remove(nearest.mesh);
-resources.splice(resources.indexOf(nearest),1);
-updateInventory();
-message("Ресурс собран!");
-}
-function updateInventory(){
-document.getElementById("wood").innerText=wood;
-document.getElementById("stone").innerText=stone;
-document.getElementById("berries").innerText=berries;
-document.getElementById("energy").innerText=energy;
-}
-function openInventory(){
-const el=document.getElementById("inventory");
-el.style.display=el.style.display==="flex"?"none":"flex";
-}
-function message(text){
-const el=document.getElementById("message");
-el.innerText=text;
-setTimeout(()=>el.innerText="",1800);
-}
-// STATUS
-function updateStats(){
-document.getElementById("health").style.width=health+"%";
-document.getElementById("armor").style.width=armor+"%";
-document.getElementById("hunger").style.width=hunger+"%";
-document.getElementById("thirst").style.width=thirst+"%";
-}
-// GAME LOOP
-function animate(time=0){
-requestAnimationFrame(animate);
-const delta=Math.min((time-lastTime)/16.67,2);
-lastTime=time;
-if(playing){
-let x=moveX,z=moveY;
-if(keys.w||keys.arrowup)z-=1;
-if(keys.s||keys.arrowdown)z+=1;
-if(keys.a||keys.arrowleft)x-=1;
-if(keys.d||keys.arrowright)x+=1;
-let len=Math.hypot(x,z);
-if(len>1){x/=len;z/=len}
-if(len>.05){
-let dx=x*Math.cos(angle)-z*Math.sin(angle);
-let dz=x*Math.sin(angle)+z*Math.cos(angle);
-player.position.x+=dx*.14*delta;
-player.position.z+=dz*.14*delta;
-player.rotation.y=Math.atan2(dx,dz);
-legs[0].rotation.x=Math.sin(time*.015)*.5;
-legs[1].rotation.x=-Math.sin(time*.015)*.5;
-arms[0].rotation.x=-Math.sin(time*.015)*.3;
-arms[1].rotation.x=Math.sin(time*.015)*.3;
-}else{
-legs.forEach(l=>l.rotation.x=0);
-arms.forEach(a=>a.rotation.x=0);
-}
-player.position.x=THREE.MathUtils.clamp(player.position.x,-115,115);
-player.position.z=THREE.MathUtils.clamp(player.position.z,-115,115);
+joystick.addEventListener("pointerup",stopJoystick);
+joystick.addEventListener("pointercancel",stopJoystick);
 // JUMP
-if(jumping){
-player.position.y+=velocityY*delta;
-velocityY-=.012*delta;
-if(player.position.y<=0){
-player.position.y=0;
-jumping=false;
-}
-}
-// CAMERA
-const target=new THREE.Vector3(
-player.position.x-Math.sin(angle)*7,
-player.position.y+4,
-player.position.z-Math.cos(angle)*7
-);
-camera.position.lerp(target,.12);
-camera.lookAt(player.position.x,player.position.y+1.3,player.position.z);
-// DRONES
-drones.forEach(d=>{
-d.phase+=.02*delta;
-d.mesh.position.y=1.5+Math.sin(d.phase)*.5;
-d.mesh.rotation.y+=.01*delta;
+document.getElementById("jump").onclick=()=>{
+    if(grounded) {
+        velocityY=0.15;
+        grounded=false;
+    }
+};
+// INVENTORY
+document.querySelectorAll(".slot").forEach(slot=>{
+    slot.onclick=()=>{
+        document.querySelectorAll(".slot").forEach(s=>
+            s.classList.remove("active")
+        );
+        slot.classList.add("active");
+        selected=slot.dataset.block;
+    };
 });
-// NEEDS
-elapsed+=delta;
-if(elapsed>60){
-elapsed=0;
-hunger=Math.max(0,hunger-1);
-thirst=Math.max(0,thirst-2);
-if(hunger===0||thirst===0)health=Math.max(0,health-2);
-updateStats();
+// RAYCASTER
+const raycaster=new THREE.Raycaster();
+function getTarget() {
+    raycaster.setFromCamera(
+        new THREE.Vector2(0,0),
+        camera
+    );
+    return raycaster.intersectObjects(blocks,false)[0];
 }
-sun.position.x=Math.sin(time*.00005)*60+30;
-sun.position.y=50;
-document.getElementById("clock").innerText=
-Math.sin(time*.00005)>0?"День":"Ночь";
-if(health<=0){
-playing=false;
-document.getElementById("end").style.display="flex";
-}
-}
-renderer.render(scene,camera);
+// BREAK
+document.getElementById("break").onclick=()=>{
+    const hit=getTarget();
+    if(!hit) return;
+    const block=hit.object;
+    scene.remove(block);
+    blocks.splice(blocks.indexOf(block),1);
+};
+// PLACE
+document.getElementById("place").onclick=()=>{
+    const hit=getTarget();
+    if(!hit) return;
+    if(hit.distance>5) return;
+    const pos=hit.object.position.clone()
+        .add(hit.face.normal);
+    // Не ставить блок прямо в игрока
+    if(pos.distanceTo(camera.position)<1.5) return;
+    addBlock(
+        Math.round(pos.x),
+        Math.round(pos.y),
+        Math.round(pos.z),
+        selected
+    );
+};
+// KEYBOARD
+window.addEventListener("keydown",e=>{
+    if(e.key==="w") movement.y=-1;
+    if(e.key==="s") movement.y=1;
+    if(e.key==="a") movement.x=-1;
+    if(e.key==="d") movement.x=1;
+});
+window.addEventListener("keyup",e=>{
+    if(["w","s"].includes(e.key)) movement.y=0;
+    if(["a","d"].includes(e.key)) movement.x=0;
+});
+// GAME LOOP
+function animate() {
+    requestAnimationFrame(animate);
+    const speed=0.07;
+    camera.position.x +=
+        (-Math.sin(yaw)*movement.y+
+        Math.cos(yaw)*movement.x)*speed;
+    camera.position.z +=
+        (-Math.cos(yaw)*movement.y-
+        Math.sin(yaw)*movement.x)*speed;
+    camera.position.y+=velocityY;
+    velocityY-=0.008;
+    if(camera.position.y<=2) {
+        camera.position.y=2;
+        velocityY=0;
+        grounded=true;
+    }
+    renderer.render(scene,camera);
 }
 animate();
 // RESIZE
 window.addEventListener("resize",()=>{
-camera.aspect=innerWidth/innerHeight;
-camera.updateProjectionMatrix();
-renderer.setSize(innerWidth,innerHeight);
+    camera.aspect=innerWidth/innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(innerWidth,innerHeight);
 });
-updateStats();
-updateInventory();
 </script>
 </body>
 </html>
